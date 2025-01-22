@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontakt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            background-color: #333333;
+            color: #ffffff;
+            padding: 10px;
+            margin: 0;
+            border-radius: 4px 4px 0 0;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #dddddd;
+        }
+        th, td {
+            text-align: center;
+            padding: 10px;
+        }
+        th {
+            background-color: #555555;
+            color: #ffffff;
+        }
+        td {
+            background-color: #f9f9f9;
+        }
+        a.button {
+            display: inline-block;
+            background-color: #007BFF;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        a.button:hover {
+            background-color: #0056b3;
+        }
+        .opening-hours {
+            background-color: #ffffff; /* Zmieniono na białe tło */
+            color: #000000; /* Zmieniono na czarny tekst */
+            padding: 20px;
+            border: 2px solid #cccccc; /* Dodano obramowanie dla lepszej widoczności */
+            border-radius: 8px;
+            text-align: center;
+        }
+        .opening-hours h2 {
+            margin-top: 0;
+            font-size: 1.5em; /* Większy rozmiar czcionki */
+        }
+        .opening-hours p {
+            margin: 10px 0; /* Większe odstępy między wierszami */
+            font-size: 1.1em; /* Zwiększono rozmiar tekstu */
+            font-weight: bold; /* Ustawiono tekst pogrubiony */
+        }
+        .opening-hours p.note {
+            font-size: 0.9em;
+            font-weight: normal;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2>Kontakt</h2>
+            <p>Tel. 41 247 53 34 (recepcja, rezerwacje torów)</p>
+            <p>Tel. 41 247 53 33 (biuro)</p>
+            <p>Rezerwacja loży: 632 522 345</p>
+            <p>Email: <a href="mailto:arcade_games@wroclaw.pl">arcade_games@wroclaw.pl</a></p>
+        </div>
+        <div class="section">
+            <h2>Rezerwacja</h2>
+            <a href="http://127.0.0.1/" class="button">Rezerwuj online</a>
+        </div>
+        <div class="section opening-hours">
+            <h2>Godziny otwarcia</h2>
+            <p>Poniedziałek: 10:00 - 24:00</p>
+            <p>Wtorek: 10:00 - 24:00</p>
+            <p>Środa: 10:00 - 24:00</p>
+            <p>Czwartek: 10:00 - 24:00</p>
+            <p>Piątek: 10:00 - 24:00</p>
+            <p>Sobota: 10:00 - 24:00</p>
+            <p>Niedziela: 12:00 - 24:00</p>
+            <p class="note">Godziny otwarcia mogą ulec zmianie w zależności od ruchu.</p>
+        </div>
+    </div>
+</body>
+</html>

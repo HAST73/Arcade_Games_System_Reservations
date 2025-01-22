@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilard - Rezerwacja</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #333;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            background-color: #333;
+            padding: 10px;
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 16px;
+        }
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #1E90FF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #156fbb;
+        }
+        .contact p {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        .contact a {
+            color: #1E90FF;
+            text-decoration: none;
+        }
+        .contact a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Bilard - Rezerwacja</div>
+
+    <div class="container">
+        <div class="section-title">Zarezerwuj</div>
+        <form id="reservation-form" action="/submit_reservation" method="post">
+            <!-- Ukryte pole dla game_id -->
+            <input type="hidden" id="game_id" name="game_id" value="1">
+
+            <div class="form-group">
+                <label for="data">Data</label>
+                <input type="date" id="data" name="data" value="2025-01-10">
+            </div>
+            <div class="form-group">
+                <label for="godzina">Godzina</label>
+                <input type="time" id="godzina" name="godzina" value="20:30">
+            </div>
+            <div class="form-group">
+                <label for="czas-gry">Czas gry</label>
+                <select id="czas-gry" name="czas-gry">
+                    <option value="1h">1h</option>
+                    <option value="2h">2h</option>
+                    <option value="3h">3h</option>
+                    <option value="4h">4h</option>
+                    <option value="5h">5h</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="ilosc-stanowisk">Ilość stanowisk (stołów)</label>
+                <select id="ilosc-stanowisk" name="ilosc-stanowisk">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="ilosc-graczy">Ilość osób</label>
+                <select id="ilosc-graczy" name="ilosc-graczy">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                </select>
+            </div>
+            <div class="btn-container">
+<!--                <button type="submit" class="btn">Zarezerwuj</button>-->
+                <button type="button" class="btn" onclick="submitReservation()">Zarezerwuj</button>
+                <button type="button" class="btn" onclick="checkAvailability()">Sprawdź dostępność</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    async function checkAvailability() {
+        const data = document.getElementById('data').value;
+        const godzina = document.getElementById('godzina').value;
+        const czasGry = document.getElementById('czas-gry').value.slice(0, -1); // Usunięcie 'h'
+        const liczbaOsob = document.getElementById('ilosc-graczy').value;
+
+        const response = await fetch('/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: data,
+                godzina: godzina,
+                liczba_osob: parseInt(liczbaOsob),
+                czas_gry: parseInt(czasGry)
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message || "Czas jest dostępny.");
+            return true;
+        } else {
+            alert(result.error || "Czas nie jest dostępny.");
+            return false;
+        }
+    }
+
+    async function submitReservation() {
+        const form = document.getElementById('reservation-form');
+        const isAvailable = await checkAvailability();
+
+        if (!isAvailable) {
+            return;
+        }
+
+        // Jeśli czas jest dostępny, wyświetl komunikat potwierdzający dostępność
+        const userConfirmed = confirm("Czas jest dostępny. Czy na pewno chcesz zarezerwować?");
+        if (!userConfirmed) {
+            return; // Jeśli użytkownik anulował, zakończ funkcję
+        }
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/submit_reservation', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert("Rezerwacja została pomyślnie zatwierdzona!");
+            } else {
+                const result = await response.json();
+                alert(result.error || "Wystąpił błąd podczas zatwierdzania rezerwacji.");
+            }
+        } catch (error) {
+            console.error("Błąd podczas wysyłania rezerwacji:", error);
+            alert("Wystąpił błąd podczas zatwierdzania rezerwacji.");
+        }
+    }
+    </script>
+</body>
+</html>

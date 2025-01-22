@@ -1,0 +1,140 @@
+{% extends 'App.html' %}
+{% block content %}
+
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .card {
+            margin-bottom: 20px;
+        }
+        .card img {
+            height: 150px;
+            object-fit: cover;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Arcade Games</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            {% if user %}
+                <!-- Widoczne tylko dla zalogowanych -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Wyloguj</a>
+                </li>
+                <li class="nav-item">
+                    <span class="navbar-text text-light ml-2">Witaj, {{ user[1] }}</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('test_system') }}">Test Systemu</a>
+                </li>
+            {% else %}
+                <!-- Widoczne tylko dla niezalogowanych -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Logowanie</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('register') }}">Rejestracja</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/rezerwacja.jpg" class="card-img-top" alt="Rezerwacje">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Rezerwacje</h5>
+                    <a href="reservation" class="btn btn-primary">Sprawdź</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/cennik.jpg" class="card-img-top" alt="Cennik">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Cennik</h5>
+                    <a href="priceList" class="btn btn-primary">Sprawdź ceny</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/contact.jpg" class="card-img-top" alt="Menu">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Kontakt</h5>
+                    <a href="contact" class="btn btn-primary">Więcej informacji</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/kregle.jpg" class="card-img-top" alt="Kręgle">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Kręgle</h5>
+                    <a href="bowling" class="btn btn-primary">Więcej informacji</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/billiard.jpg" class="card-img-top" alt="Billard">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Billard</h5>
+                    <a href="billiard" class="btn btn-primary">Więcej informacji</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/shuffleboard.jpg" class="card-img-top" alt="Shuffleboard">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Shuffleboard</h5>
+                    <a href="shuffleboard" class="btn btn-primary">Więcej informacji</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-3">
+            <div class="card">
+                <img src="../static/dart.jpg" class="card-img-top" alt="Dart">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Dart [NOWOŚĆ]</h5>
+                    <a href="dart" class="btn btn-primary">Więcej informacji</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+
+{% endblock %}
