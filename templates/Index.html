@@ -42,8 +42,19 @@
                     <span class="navbar-text text-light ml-2">Witaj, {{ user[1] }}</span>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('test_system') }}">Test Systemu</a>
+                    <a class="nav-link" href="{{ url_for('system_tests') }}">Test Systemu</a>
                 </li>
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                    <div class="alert alert-success">
+                      <ul class="mb-0">
+                        {% for message in messages %}
+                          <li>{{ message }}</li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  {% endif %}
+                {% endwith %}
             {% else %}
                 <!-- Widoczne tylko dla niezalogowanych -->
                 <li class="nav-item">
@@ -56,6 +67,21 @@
         </ul>
     </div>
 </nav>
+
+<!-- Komunikaty Flash -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="container mt-3">
+        <div class="alert alert-success">
+          <ul class="mb-0">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  {% endwith %}
 
 <div class="container">
     <div class="row justify-content-center">

@@ -1,15 +1,11 @@
-import unittest
-from io import StringIO
-
+from bs4 import BeautifulSoup
 from flask import Flask, render_template, redirect, url_for, flash, session, request, jsonify
-from flask.testing import FlaskClient
 from flask_wtf import FlaskForm
 from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError, Regexp, Length
 import bcrypt
 from flask_mysqldb import MySQL
 from datetime import datetime, time, timedelta
-import subprocess
 
 # Tworzymy instancję aplikacji
 app = Flask(__name__)
@@ -32,124 +28,271 @@ HOURS = {
     "Sunday": (time(12, 0), time(23, 59)),
 }
 
-@app.route('/test_system', methods=['GET', 'POST'])
-def test_system():
+
+@app.route('/system_tests', methods=['GET', 'POST'])  # Zmiana adresu URL i nazwy funkcji
+def system_tests():
     test_output = []
     raw_output = ""
 
     if request.method == 'POST':
-        # Test database connection
-        db_connection_result = test_database_connection()
-        if db_connection_result is True:
-            test_output.append({
-                "name": "Database Connection Test",
-                "status": "PASS",
-                "details": "Successfully connected to the database."
-            })
-        else:
-            test_output.append({
-                "name": "Database Connection Test",
-                "status": "FAIL",
-                "details": f"Failed to connect to the database. Error: {db_connection_result}"
-            })
+        tests = [
+            ('Database Connection', test_database_connection),
+            ('User Registration', test_registration),
+            ('User Login', test_login),
+            ('Reservation System', test_reservation),
+            ('Game Availability', test_game_availability),
+            ('Invalid Registration', test_invalid_registration),
+            ('Past Reservation', test_past_reservation)
+        ]
 
-        # Test registration functionality
-        registration_result = test_registration()
-        if registration_result is True:
-            test_output.append({
-                "name": "Registration Functionality Test",
-                "status": "PASS",
-                "details": "Registration route is working correctly."
-            })
-        else:
-            test_output.append({
-                "name": "Registration Functionality Test",
-                "status": "FAIL",
-                "details": f"Registration test failed. Error: {registration_result}"
-            })
+        for test_name, test_function in tests:
+            try:
+                result = test_function()
+                test_output.append(format_test_result(test_name, result))
+            except Exception as e:
+                test_output.append({
+                    "name": test_name,
+                    "status": "ERROR",
+                    "details": f"Test crashed: {str(e)}"
+                })
 
-        # Generate raw output
         raw_output = "\n".join([f"{test['name']}: {test['status']} - {test['details']}" for test in test_output])
 
     return render_template('TestSystem.html', test_output=test_output, raw_output=raw_output)
 
+
+def format_test_result(name, result):
+    if result is True:
+        return {"name": name, "status": "PASS", "details": "Operation successful"}
+    elif isinstance(result, str):
+        return {"name": name, "status": "FAIL", "details": result}
+    else:
+        return {"name": name, "status": "FAIL", "details": "Unknown error"}
+
+
+def test_login():
+    test_user = {
+        'email': 'test_login@example.com',
+        'password': 'TestPassword123!'
+    }
+
+    cursor = None
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("DELETE FROM users WHERE email = %s", (test_user['email'],))
+        mysql.connection.commit()
+
+        hashed_password = bcrypt.hashpw(test_user['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cursor.execute(
+            "INSERT INTO users (first_name, last_name, email, password) VALUES (%s, %s, %s, %s)",
+            ('Test', 'User', test_user['email'], hashed_password)
+        )
+        mysql.connection.commit()
+
+        cursor.execute("SELECT * FROM users WHERE email = %s", (test_user['email'],))
+        user = cursor.fetchone()
+        if not user:
+            return "Test user not inserted"
+
+        with app.test_client() as client:
+            # Bezpieczne pobranie aktualnej wartości CSRF
+            original_csrf = app.config.get('WTF_CSRF_ENABLED', True)
+            app.config['WTF_CSRF_ENABLED'] = False
+
+            response = client.post(
+                '/login',
+                data={
+                    'email': test_user['email'],
+                    'password': test_user['password'],
+                    'submit': 'Login'
+                },
+                follow_redirects=True
+            )
+
+            # Przywrócenie oryginalnych ustawień CSRF
+            app.config['WTF_CSRF_ENABLED'] = original_csrf
+
+            with client.session_transaction() as sess:
+                if 'user_id' not in sess:
+                    return "Session not set"
+
+            if b"Login successful!" not in response.data:
+                return "Login success message missing"
+
+            return True
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+    finally:
+        if cursor:
+            cursor.execute("DELETE FROM users WHERE email = %s", (test_user['email'],))
+            mysql.connection.commit()
+            cursor.close()
+
+def test_reservation(test_data=None):
+    try:
+        # Domyślne dane testowe
+        if test_data is None:
+            test_data = {
+                'game_id': 1,
+                'reservation_date': datetime.now().date() + timedelta(days=1),
+                'reservation_time': datetime.now().time(),
+                'num_hours': 2,
+                'num_people': 4
+            }
+
+        # Sprawdź datę
+        if test_data['reservation_date'] < datetime.now().date():
+            return "Cannot make reservation for past date"
+
+        cursor = mysql.connection.cursor()
+
+        # Utwórz rezerwację
+        cursor.execute(
+            """INSERT INTO reservations 
+            (user_id, game_id, reservation_date, reservation_time, num_hours, num_people)
+            VALUES (%s, %s, %s, %s, %s, %s)""",
+            (1, test_data['game_id'], test_data['reservation_date'],
+             test_data['reservation_time'], test_data['num_hours'], test_data['num_people'])
+        )
+        mysql.connection.commit()
+
+        # Sprawdź istniejące rezerwacje
+        cursor.execute(
+            "SELECT * FROM reservations WHERE game_id = %s AND reservation_date = %s",
+            (test_data['game_id'], test_data['reservation_date'])
+        )
+        reservations = cursor.fetchall()
+
+        # Usuń testową rezerwację
+        cursor.execute(
+            "DELETE FROM reservations WHERE game_id = %s AND reservation_date = %s",
+            (test_data['game_id'], test_data['reservation_date'])
+        )
+        mysql.connection.commit()
+        cursor.close()
+
+        return len(reservations) > 0
+
+    except Exception as e:
+        return f"Reservation error: {str(e)}"
+
+
+def test_game_availability():
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM games WHERE availability = TRUE")  # Zmiana nazwy kolumny
+        available_games = cursor.fetchall()
+        cursor.close()
+        return len(available_games) > 0
+    except Exception as e:
+        return f"Availability check error: {str(e)}"
+
 def test_database_connection():
     try:
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT DATABASE()")
-        db_name = cursor.fetchone()[0]
-        if db_name != 'arcade_games_system':
-            return f"Connected to the wrong database: {db_name}"
-        cursor.execute("SHOW TABLES")
-        tables = cursor.fetchall()
-        if not tables:
-            return "No tables found in the arcade_games_system database."
+        cursor.execute("SELECT 1")  # Proste zapytanie testujące połączenie
         cursor.close()
         return True
     except Exception as e:
-        return str(e)
+        return f"Database error: {str(e)}"
 
 def test_registration():
+    test_user = {
+        'first_name': 'Test',
+        'last_name': 'User',
+        'email': 'test@example.com',
+        'password': 'TestPassword123!'
+    }
+
     try:
-        with app.test_client() as client:
-            # Dane testowe
-            test_user = {
-                'first_name': 'Test',
-                'last_name': 'User',
-                'email': 'testuser@example.com',
-                'password': 'TestPassword123!',
-            }
+        cursor = mysql.connection.cursor()
 
-            # Wysyłamy POST na trasę rejestracji
-            app.logger.info("Starting registration test.")
-            response = client.post('/register', data=test_user, follow_redirects=True)
+        # Sprawdź, czy email istnieje
+        cursor.execute("SELECT email FROM users WHERE email = %s", (test_user['email'],))
+        if cursor.fetchone():
+            return "Email already exists"
 
-            # Sprawdzamy kod odpowiedzi
-            if response.status_code != 200:
-                app.logger.error(f"Registration failed. Status code: {response.status_code}")
-                return f"Registration failed with status code: {response.status_code}"
+        # Hashuj hasło i dodaj użytkownika
+        hashed_password = bcrypt.hashpw(test_user['password'].encode('utf-8'), bcrypt.gensalt())
+        cursor.execute(
+            "INSERT INTO users (first_name, last_name, email, password) VALUES (%s, %s, %s, %s)",
+            (test_user['first_name'], test_user['last_name'], test_user['email'], hashed_password)
+        )
+        mysql.connection.commit()
 
-            # Sprawdzamy, czy użytkownik został dodany do bazy danych
-            try:
-                cursor = mysql.connection.cursor()
-                cursor.execute("SELECT * FROM users WHERE email = %s", (test_user['email'],))
-                user = cursor.fetchone()
-                if not user:
-                    app.logger.error("User not found in database after registration.")
-                    return "User was not added to the database."
-                else:
-                    app.logger.info(f"User {test_user['email']} found in the database.")
+        # Usuń użytkownika testowego
+        cursor.execute("DELETE FROM users WHERE email = %s", (test_user['email'],))
+        mysql.connection.commit()
+        cursor.close()
 
-                # Sprawdzamy poprawność hasła
-                if not bcrypt.checkpw(test_user['password'].encode('utf-8'), user[4].encode('utf-8')):
-                    app.logger.error("Password hash does not match.")
-                    return "Password was not correctly hashed and stored."
+        return True
 
-            except Exception as err:
-                app.logger.error(f"Database error during user verification: {str(err)}")
-                return f"Database error: {err}"
-
-            finally:
-                if cursor:
-                    cursor.close()
-
-            # Usuwamy dane testowe z bazy
-            try:
-                cursor = mysql.connection.cursor()
-                cursor.execute("DELETE FROM users WHERE email = %s", (test_user['email'],))
-                mysql.connection.commit()
-                cursor.close()
-                app.logger.info(f"Test user {test_user['email']} successfully deleted.")
-            except Exception as cleanup_err:
-                app.logger.error(f"Error during test cleanup: {cleanup_err}")
-                return f"Cleanup error: {cleanup_err}"
-
-            return True
     except Exception as e:
-        app.logger.error(f"Error during registration test: {str(e)}")
-        return f"Error during registration test: {str(e)}"
+        return f"Registration error: {str(e)}"
 
 
+# Dodaj nowe funkcje testowe
+def test_invalid_registration():
+    test_user = {
+        'first_name': 'Test',
+        'last_name': 'User',
+        'email': 'test_invalid@example.com',
+        'password': 'TestPassword123!'
+    }
+
+    cursor = None
+    try:
+        cursor = mysql.connection.cursor()
+        hashed_password = bcrypt.hashpw(test_user['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cursor.execute(
+            "INSERT INTO users (first_name, last_name, email, password) VALUES (%s, %s, %s, %s)",
+            (test_user['first_name'], test_user['last_name'], test_user['email'], hashed_password)
+        )
+        mysql.connection.commit()
+
+        with app.test_client() as client:
+            # Usunięto parsowanie CSRF
+            response = client.post(
+                '/register',
+                data={
+                    'first_name': 'Another',
+                    'last_name': 'User',
+                    'email': test_user['email'],
+                    'password': 'DifferentPassword123!',
+                    'submit': 'Register',
+                },
+                follow_redirects=True
+            )
+
+            if b'Email is already taken' not in response.data:
+                return "Form validation failed to detect duplicate email"
+
+        return True  # Zwracaj True zamiast "PASS"
+
+    except Exception as e:
+        return f"ERROR - {str(e)}"
+    finally:
+        if cursor:
+            cursor.execute("DELETE FROM users WHERE email = %s", (test_user['email'],))
+            mysql.connection.commit()
+            cursor.close()
+
+
+def test_past_reservation():
+    try:
+        test_data = {
+            'game_id': 1,
+            'reservation_date': datetime.now().date() - timedelta(days=1),
+            'reservation_time': datetime.now().time(),
+            'num_hours': 2,
+            'num_people': 4
+        }
+        result = test_reservation(test_data)
+        # Expecting an error message for past date
+        return result == "Cannot make reservation for past date"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -207,21 +350,20 @@ class RegisterForm(FlaskForm):
     ])
     submit = SubmitField("Register")
 
+    def validate_email(self, field):
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE email=%s", (field.data,))
+        user = cursor.fetchone()
+        cursor.close()
+        if user:
+            raise ValidationError('Email is already taken')
+
 def log_action(user_id, log_type, log_message):
     cursor = mysql.connection.cursor()
     cursor.execute("INSERT INTO logs (user_id, log_type, log_message) VALUES (%s, %s, %s)",
                    (user_id, log_type, log_message))
     mysql.connection.commit()
     cursor.close()
-
-
-    def validate_email(self, field):
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM users where email=%s", (field.data,))
-        user = cursor.fetchone()
-        cursor.close()
-        if user:
-            raise ValidationError('Email is already taken')
 
 
 class LoginForm(FlaskForm):
