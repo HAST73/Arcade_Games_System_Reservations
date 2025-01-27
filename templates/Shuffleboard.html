@@ -56,7 +56,7 @@
         }
         .btn-container {
             display: flex;
-            gap: 15px; /* Dodaje przerwę między przyciskami */
+            gap: 15px;
             margin-top: 10px;
         }
         .btn {
@@ -91,7 +91,10 @@
 
     <div class="container">
         <div class="section-title">Zarezerwuj</div>
-        <form>
+        <form id="reservation-form" action="/submit_reservation" method="post">
+            <!-- Ukryte pole dla game_id -->
+            <input type="hidden" id="game_id" name="game_id" value="1">
+
             <div class="form-group">
                 <label for="data">Data</label>
                 <input type="date" id="data" name="data" value="2025-01-10">
@@ -135,16 +138,77 @@
                 </select>
             </div>
             <div class="btn-container">
-                <button type="submit" class="btn">Szukaj</button>
+<!--                <button type="submit" class="btn">Zarezerwuj</button>-->
+                <button type="button" class="btn" onclick="submitReservation()">Zarezerwuj</button>
                 <button type="button" class="btn" onclick="checkAvailability()">Sprawdź dostępność</button>
             </div>
         </form>
     </div>
 
     <script>
-        function checkAvailability() {
-            alert('Sprawdzanie dostępności...');
+    async function checkAvailability() {
+        const data = document.getElementById('data').value;
+        const godzina = document.getElementById('godzina').value;
+        const czasGry = document.getElementById('czas-gry').value.slice(0, -1); // Usunięcie 'h'
+        const liczbaOsob = document.getElementById('ilosc-graczy').value;
+
+        const response = await fetch('/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: data,
+                godzina: godzina,
+                liczba_osob: parseInt(liczbaOsob),
+                czas_gry: parseInt(czasGry)
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message || "Czas jest dostępny.");
+            return true;
+        } else {
+            alert(result.error || "Czas nie jest dostępny.");
+            return false;
         }
+    }
+
+    async function submitReservation() {
+        const form = document.getElementById('reservation-form');
+        const isAvailable = await checkAvailability();
+
+        if (!isAvailable) {
+            return;
+        }
+
+        // Jeśli czas jest dostępny, wyświetl komunikat potwierdzający dostępność
+        const userConfirmed = confirm("Czas jest dostępny. Czy na pewno chcesz zarezerwować?");
+        if (!userConfirmed) {
+            return; // Jeśli użytkownik anulował, zakończ funkcję
+        }
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/submit_reservation', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert("Rezerwacja została pomyślnie zatwierdzona!");
+            } else {
+                const result = await response.json();
+                alert(result.error || "Wystąpił błąd podczas zatwierdzania rezerwacji.");
+            }
+        } catch (error) {
+            console.error("Błąd podczas wysyłania rezerwacji:", error);
+            alert("Wystąpił błąd podczas zatwierdzania rezerwacji.");
+        }
+    }
     </script>
 </body>
 </html>
