@@ -138,7 +138,6 @@
                 </select>
             </div>
             <div class="btn-container">
-<!--                <button type="submit" class="btn">Zarezerwuj</button>-->
                 <button type="button" class="btn" onclick="submitReservation()">Zarezerwuj</button>
                 <button type="button" class="btn" onclick="checkAvailability()">Sprawdź dostępność</button>
             </div>
@@ -149,7 +148,7 @@
     async function checkAvailability() {
         const data = document.getElementById('data').value;
         const godzina = document.getElementById('godzina').value;
-        const czasGry = document.getElementById('czas-gry').value.slice(0, -1); // Usunięcie 'h'
+        const czasGry = document.getElementById('czas-gry').value.slice(0, -1);
         const liczbaOsob = document.getElementById('ilosc-graczy').value;
 
         const response = await fetch('/check', {
