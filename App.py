@@ -409,7 +409,7 @@ def login():
         cursor.close()
 
         # Validate the password using bcrypt
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[4].encode('utf-8')):  # Assuming `user[4]` is the password column
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[4].encode('utf-8')):
             session['user_id'] = user[0]
             flash("Login successful!")
 

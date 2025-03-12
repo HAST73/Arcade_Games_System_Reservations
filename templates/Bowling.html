@@ -185,7 +185,7 @@
         }
 
         // Jeśli czas jest dostępny, wyświetl komunikat potwierdzający dostępność
-        const userConfirmed = confirm("Czas jest dostępny. Czy na pewno chcesz zarezerwować?");
+        const userConfirmed = confirm("Time is available. Are you sure you want to book?");
         if (!userConfirmed) {
             return; // Jeśli użytkownik anulował, zakończ funkcję
         }
@@ -199,14 +199,14 @@
             });
 
             if (response.ok) {
-                alert("Rezerwacja została pomyślnie zatwierdzona!");
+                alert("The reservation has been successfully confirmed!");
             } else {
                 const result = await response.json();
-                alert(result.error || "Wystąpił błąd podczas zatwierdzania rezerwacji.");
+                alert(result.error || "An error occurred when approving the reservation.");
             }
         } catch (error) {
-            console.error("Błąd podczas wysyłania rezerwacji:", error);
-            alert("Wystąpił błąd podczas zatwierdzania rezerwacji.");
+            console.error("Error when sending a booking:", error);
+            alert("An error occurred when approving the reservation.");
         }
     }
     </script>
