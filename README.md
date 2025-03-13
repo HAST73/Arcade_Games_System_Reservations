@@ -33,3 +33,7 @@
   - **Database:** MySQL
   - **Frontend:** HTML, CSS, JavaScript
   - **Security:** bcrypt, Flask-WTF for form validation
+
+<h2 align="left">Preview</h2>
+
+<img src="preview.jpg" alt="Arcade Games Reservation System Preview" width="600">
